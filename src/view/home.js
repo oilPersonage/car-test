@@ -9,7 +9,7 @@ const Home = () => {
   const timeout = useRef();
   const [data, dispatch] = useReducer((state, action) => {
     const { type, payload } = action;
-    switch (action.type) {
+    switch (type) {
       case 'init':
         return { ...payload };
       default:
@@ -20,10 +20,16 @@ const Home = () => {
   useEffect(() => {
     timeout.current = setTimeout(() => dispatch({ type: 'init', payload: cars }), 1000);
     return () => clearTimeout(timeout.current);
-  });
-
+  }, []);
+  console.log({ data });
   return <div className="container">
-        <Card />
+      <div className="cardContainer">
+      {Object.keys(data).map((item) => <Card
+        key={data[item].id}
+        item={data[item]}
+        dispatch={dispatch}
+      />)}
+      </div>
     </div>;
 };
 
