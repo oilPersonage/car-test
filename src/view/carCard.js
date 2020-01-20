@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Card = ({ item, distance, index }) => {
+const Card = ({ item }) => {
   const [show, setShow] = useState(false);
 
   const {
@@ -10,7 +10,8 @@ const Card = ({ item, distance, index }) => {
   const visibleLink = features.length > 3;
   const price = String(item.price).replace(/(\d{1,3})(?=((\d{3})*([^\d]|$)))/g, ' $1 ').trim();
   const arrAddress = [dealer.name, dealer.city, dealer.address];
-  if (distance[index]) arrAddress.push(`${distance[index]}км`);
+  if (dealer.distance) arrAddress.push(`${dealer.distance.toFixed(1)}км`);
+
   const address = arrAddress.join(', ');
   return <div className="card">
       <div className="cardImg">

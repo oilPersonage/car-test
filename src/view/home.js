@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useReducer, useRef, useMemo, useState, useCallback,
+  useEffect, useReducer, useRef, useMemo, useState,
 } from 'react';
 import cars from '../utils/cars';
 import getDistance from '../utils/getDistance';
@@ -7,33 +7,36 @@ import getDistance from '../utils/getDistance';
 // components
 
 import Card from './carCard';
+import Filter from './filter';
 
 const Home = () => {
   const timeout = useRef();
   const [coord, setCoord] = useState({ x: 0, y: 0 });
-  const [distance, setDistance] = useState([]);
+  const [findDist, setFindDist] = useState(false);
 
   const [data, dispatch] = useReducer((state, action) => {
-    const { type, payload, index } = action;
+    const { type, payload } = action;
     switch (type) {
       case 'init':
-        return { ...payload };
+        return [...payload];
       case 'coord':
-        return { ...state, [index]: { ...state[index], dealer: { ...state[index].dealer, distance: payload } } };
+        return [...state.map((el) => (
+          { ...el, dealer: { ...el.dealer, distance: getDistance(coord.x, coord.y, el.dealer.latitude, el.dealer.longitude) } }
+        ))];
+      case 'sort':
+        return [...state.sort((a, b) => (payload ? b.price - a.price : b.dealer.distance - a.dealer.distance))];
       default:
         return state;
     }
-  }, {});
+  }, []);
+
 
   useMemo(() => {
-    const arrDist = [];
-    Object.keys(data).forEach((el) => {
-      const length = getDistance(coord.x, coord.y, data[el].dealer.latitude, data[el].dealer.longitude);
-      arrDist.push(+length.toFixed(2));
-    });
-    setDistance(arrDist);
-  }, [coord.x, coord.y, data]);
-  console.log(distance);
+    if (findDist) {
+      dispatch({ type: 'coord' });
+    }
+  }, [findDist]);
+
   const findGeoPosition = () => {
     try {
       if (navigator.geolocation) {
@@ -48,20 +51,26 @@ const Home = () => {
       console.log(error);
     }
   };
-  console.log({ data });
+
   useEffect(() => {
     findGeoPosition();
-    timeout.current = setTimeout(() => dispatch({ type: 'init', payload: cars }), 1000);
+    timeout.current = setTimeout(() => {
+      const arrData = Object.keys(cars).map((el) => cars[el]).sort((a, b) => b.price - a.price);
+      dispatch({ type: 'init', payload: arrData });
+      setFindDist(true);
+    },
+    1000);
     return () => clearTimeout(timeout.current);
   }, []);
+
   return <div className="container">
+      <Filter dispatch={dispatch} />
       <div className="cardContainer">
-      {Object.keys(data).map((item) => <Card
-        key={data[item].id}
-        item={data[item]}
-        index={item}
+      {data.map((item) => <Card
+        key={item.id}
+        item={item}
+        index={item.id}
         dispatch={dispatch}
-        distance={distance}
       />)}
       </div>
     </div>;
