@@ -11,17 +11,15 @@ import Filter from './filter';
 
 const Home = () => {
   const timeout = useRef();
-  const [coord, setCoord] = useState({ x: 0, y: 0 });
-  const [findDist, setFindDist] = useState(false);
-
+  const [coord, setCoord] = useState({ x: 55.7536232, y: 37.6199775 });
+  const [load, setLoad] = useState(false);
   const [data, dispatch] = useReducer((state, action) => {
     const { type, payload } = action;
     switch (type) {
       case 'init':
         return [...payload];
       case 'coord':
-        return [...state.map((el) => (
-          { ...el, dealer: { ...el.dealer, distance: getDistance(coord.x, coord.y, el.dealer.latitude, el.dealer.longitude) } }
+        return [...state.map((el) => ({ ...el, dealer: { ...el.dealer, distance: getDistance(coord.x, coord.y, el.dealer.latitude, el.dealer.longitude) } }
         ))];
       case 'sort':
         return [...state.sort((a, b) => (payload ? b.price - a.price : b.dealer.distance - a.dealer.distance))];
@@ -29,13 +27,9 @@ const Home = () => {
         return state;
     }
   }, []);
-
-
   useMemo(() => {
-    if (findDist) {
-      dispatch({ type: 'coord' });
-    }
-  }, [findDist]);
+    if (coord && load) dispatch({ type: 'coord' });
+  }, [coord, load]);
 
   const findGeoPosition = () => {
     try {
@@ -51,13 +45,12 @@ const Home = () => {
       console.log(error);
     }
   };
-
   useEffect(() => {
     findGeoPosition();
     timeout.current = setTimeout(() => {
       const arrData = Object.keys(cars).map((el) => cars[el]).sort((a, b) => b.price - a.price);
       dispatch({ type: 'init', payload: arrData });
-      setFindDist(true);
+      setLoad(true);
     },
     1000);
     return () => clearTimeout(timeout.current);
@@ -70,7 +63,6 @@ const Home = () => {
         key={item.id}
         item={item}
         index={item.id}
-        dispatch={dispatch}
       />)}
       </div>
     </div>;
